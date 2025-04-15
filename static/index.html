@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>SPECTRE 2.0</title>
+        <link rel="stylesheet" href="/static/styles.css">
+    </head>
+    <body>
+        <!-- Loading Overlay -->
+        <div id="loading-overlay">
+            <div class="loader">
+                <div class="spinner"></div>
+                <p>Loading...</p>
+            </div>
+        </div>
+
+        <!-- Notification Area -->
+        <div id="notification-area"></div>
+
+        <div class="app-container">
+
+            <!-- Login Section -->
+            <div id="login-section" class="login-section">
+                <h2>Enter your username:</h2>
+                <input type="text" id="username-input" placeholder="Username" />
+                <button id="set-username-btn">Start Editing</button>
+            </div>
+
+            <!-- Main Interface (hidden initially) -->
+            <div id="main-interface" class="main-interface hidden">
+                <div class="top-bar">
+                    <div>
+                        <label for="document-list">Document:</label>
+                        <select id="document-list"></select>
+                    </div>
+                    <div id="create-document-controls">
+                         <select id="template-list">
+                            <option value="">-- Select Template --</option>
+                            <!-- Templates loaded dynamically -->
+                         </select>
+                        <button id="create-document-btn">Create New</button>
+                    </div>
+                    <button id="version-history-btn">Version History</button>
+                </div>
+
+                <!-- Toolbar -->
+                <div class="toolbar">
+                    <div class="undo-redo-hint" style="font-size: 0.8em; color: #666; padding: 5px 0;">
+                      Use Ctrl+Z to Undo, Ctrl+Y to Redo (applies to last edited block).
+                    </div>
+                    <span class="toolbar-separator">|</span>
+                    <button class="toolbar-btn" data-command="bold" title="Bold (Ctrl+B)"><b>B</b></button>
+                    <button class="toolbar-btn" data-command="italic" title="Italic (Ctrl+I)"><i>I</i></button>
+                    <button class="toolbar-btn" data-command="underline" title="Underline (Ctrl+U)"><u>U</u></button>
+                </div>
+
+                <!-- Editor Container -->
+                <div id="editor-container" class="editor-container">
+                    <p class="placeholder">Select or create a document to begin.</p>
+                </div>
+
+                 <div id="table-context-menu" style="position: absolute; display: none; background: white; border: 1px solid #ccc; padding: 5px; z-index: 100;">
+                     <button data-action="add-row-above">Add Row Above</button>
+                     <button data-action="add-row-below">Add Row Below</button>
+                     <button data-action="delete-row">Delete Row</button>
+                     <hr>
+                     <button data-action="add-col-left">Add Col Left</button>
+                     <button data-action="add-col-right">Add Col Right</button>
+                     <button data-action="delete-col">Delete Col</button>
+                 </div>
+
+            </div> <!-- End main-interface -->
+        </div> <!-- End app-container -->
+
+        <!-- Load the main JS module -->
+        <script src="/static/app/main.js" type="module"></script>
+    </body>
+</html>

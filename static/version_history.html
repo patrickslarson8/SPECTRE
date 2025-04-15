@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Version History</title>
+  <!-- Link to the refactored CSS -->
+  <link rel="stylesheet" href="/static/styles.css">
+  <style>
+    /* Add specific styles for this page if needed */
+    body { padding: 20px; background-color: #f4f7f9; }
+    h1 { margin-bottom: 1rem; color: #333; }
+    .version-list-container {
+        background-color: #fff;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+    .version-item {
+      padding: 12px 15px;
+      border-bottom: 1px solid #e0e0e0;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .version-item:last-child { border-bottom: none; }
+    .version-item:hover { background-color: #eef2f7; }
+    .version-info span { display: block; font-size: 0.9em; color: #555; }
+    .version-info strong { font-weight: 600; color: #007bff; } /* Highlight version ID */
+    .version-changer { font-size: 0.85em; color: #6c757d; font-style: italic; }
+    .loading, .error { padding: 15px; text-align: center; color: #6c757d; }
+  </style>
+</head>
+<body>
+  <h1>Version History</h1>
+  <div id="document-title" style="margin-bottom: 1rem; font-weight: bold;"></div>
+  <div class="version-list-container">
+      <div id="version-list" class="loading">Loading versions...</div>
+  </div>
+
+  <script>
+    // Utility function to get query parameters
+    function getQueryParam(name) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(name);
+    }
+
+    const documentId = getQueryParam('document_id');
+    const versionListContainer = document.getElementById('version-list');
+    const documentTitleEl = document.getElementById('document-title');
+
+    if (!documentId) {
+      versionListContainer.innerText = "No document specified.";
+      versionListContainer.className = 'error';
+    } else {
+      // Fetch document title separately for context (optional, but nice)
+      fetch(`/api/documents/${documentId}`)
+        .then(resp => {
+            if (!resp.ok) throw new Error(`Document not found (status ${resp.status})`);
+            return resp.json();
+        })
+        .then(docData => {
+            if(documentTitleEl) documentTitleEl.innerText = `History for: ${docData.title || `Document ${documentId}`}`;
+        })
+        .catch(err => {
+            console.warn("Could not fetch document title:", err);
+            if(documentTitleEl) documentTitleEl.innerText = `History for: Document ${documentId}`;
+        });
+
+      // Fetch version history
+      fetch(`/api/versions/${documentId}`)
+        .then(resp => {
+            if (!resp.ok) throw new Error(`Failed to fetch versions (status ${resp.status})`);
+            return resp.json();
+        })
+        .then(data => {
+          const versions = data.versions; // Expecting array from API
+          versionListContainer.innerHTML = ''; // Clear loading message
+           versionListContainer.className = ''; // Remove loading class
+
+          if (!versions || versions.length === 0) {
+            versionListContainer.innerText = "No versions found for this document.";
+          } else {
+            versions.forEach(version => {
+              const div = document.createElement('div');
+              div.className = 'version-item';
+
+              const infoDiv = document.createElement('div');
+              infoDiv.className = 'version-info';
+              infoDiv.innerHTML = `
+                <span>Version: <strong>${version.version_id}</strong></span>
+                <span>Timestamp: ${new Date(version.timestamp).toLocaleString()}</span>
+              `;
+
+              const changerSpan = document.createElement('span');
+              changerSpan.className = 'version-changer';
+              changerSpan.innerText = `Changed by: ${version.changed_by || 'Unknown'}`;
+
+              div.appendChild(infoDiv);
+              div.appendChild(changerSpan);
+
+              // When clicked, open the version viewer in a new tab
+              div.onclick = () => {
+                window.open(
+                  // Use correct path to version viewer
+                  `/static/version_viewer.html?document_id=${documentId}&version_id=${version.version_id}`,
+                  '_blank'
+                );
+              };
+              versionListContainer.appendChild(div);
+            });
+          }
+        })
+        .catch(err => {
+          console.error("Error loading version history:", err);
+          versionListContainer.innerText = `Error loading versions: ${err.message}`;
+          versionListContainer.className = 'error';
+        });
+    }
+  </script>
+
+</body>
+</html>

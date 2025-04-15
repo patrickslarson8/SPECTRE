@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Version Viewer</title>
+  <!-- Link to the refactored CSS -->
+  <link rel="stylesheet" href="/static/styles.css">
+  <style>
+    /* Add specific styles for this page */
+    body { padding: 20px; background-color: #f4f7f9; }
+    h1 { margin-bottom: 0.5rem; color: #333;}
+    .version-info-bar {
+        background-color: #e9ecef;
+        padding: 10px 15px;
+        margin-bottom: 1.5rem;
+        border-radius: 4px;
+        font-size: 0.9em;
+        color: #495057;
+        border: 1px solid #ced4da;
+    }
+    .version-info-bar span { margin-right: 15px; }
+    .editor-container {
+        /* Use styles defined in styles.css, ensure it's applied */
+        border: 1px solid #d1d5db;
+        padding: 1.5rem;
+        background: #fff;
+        line-height: 1.6;
+        margin-top: 0; /* Remove extra top margin if info bar is present */
+        border-radius: 4px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    .loading, .error { padding: 15px; text-align: center; color: #6c757d; }
+  </style>
+</head>
+<body>
+  <h1>Version Viewer</h1>
+  <div id="version-info" class="version-info-bar loading">Loading version info...</div>
+
+  <!-- Apply the same container class used in index.html for consistency -->
+  <div class="editor-container" id="content-viewer">
+    <!-- Content will be loaded here -->
+  </div>
+
+  <script>
+    function getQueryParam(name) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(name);
+    }
+
+    const documentId = getQueryParam('document_id');
+    const versionId = getQueryParam('version_id');
+    const versionInfoContainer = document.getElementById('version-info');
+    const contentContainer = document.getElementById('content-viewer');
+
+    if (!documentId || !versionId) {
+      versionInfoContainer.innerText = "Missing document or version information.";
+      versionInfoContainer.className = 'version-info-bar error';
+      contentContainer.innerHTML = ''; // Clear content area
+    } else {
+      // Fetch the specific version data from the updated API endpoint
+      fetch(`/api/versions/${documentId}/${versionId}`)
+        .then(resp => {
+            if (!resp.ok) throw new Error(`Version not found or error (status ${resp.status})`);
+            return resp.json();
+        })
+        .then(data => {
+          // Update title and info bar
+          document.title = `Version ${data.version_id} - ${data.document_title || `Doc ${data.document_id}`}`;
+          versionInfoContainer.innerHTML = `
+            <span>Document: ${data.document_title || data.document_id} (ID: ${data.document_id})</span> |
+            <span>Version: <strong>${data.version_id}</strong></span> |
+            <span>Timestamp: ${new Date(data.timestamp).toLocaleString()}</span> |
+            <span>Changed by: ${data.changed_by || 'Unknown'}</span>
+          `;
+          versionInfoContainer.className = 'version-info-bar'; // Remove loading class
+
+          // Display the rendered HTML content
+          contentContainer.innerHTML = data.content;
+
+          // Make content non-editable (important for viewer)
+          contentContainer.querySelectorAll('[contenteditable]').forEach(el => {
+              el.contentEditable = 'false';
+          });
+           // Optional: Disable any interactive elements within the content if needed
+
+        })
+        .catch(err => {
+          console.error("Error loading version:", err);
+          versionInfoContainer.innerText = `Error loading version: ${err.message}`;
+          versionInfoContainer.className = 'version-info-bar error';
+          contentContainer.innerHTML = '<p style="color: red; text-align: center;">Could not load version content.</p>';
+        });
+    }
+  </script>
+
+</body>
+</html>
